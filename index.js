@@ -1,181 +1,276 @@
-const grid = document.querySelector('.grid')
-const scoreDisplay = document.querySelector('#score')
-const blockWidth = 100
-const blockHeight = 20
-const ballDiameter = 20
-const boardWidth = 560
-const boardHeight = 300
-let xDirection = -2
-let yDirection = 2
+        // Elements HTML
+        const container = document.querySelector('#container');
+        const paddle = document.querySelector('#paddle');
+        const ball = document.querySelector('#ball');
+        const bricks = [];
 
-const userStart = [230, 10]
-let currentPosition = userStart
+        let animationFrame;
 
-const ballStart = [270, 40]
-let ballCurrentPosition = ballStart
+        // Paddle config
+        let moveLeft = false;
+        let moveRight = false;
+        const step = 20;
 
-let timerId
-let score = 0
+        // Ball config
+        let ballRadius = 10;
+        let ballDx = 7;
+        let ballDy = -7;
 
-//my block
-class Block {
-  constructor(xAxis, yAxis) {
-    this.bottomLeft = [xAxis, yAxis]
-    this.bottomRight = [xAxis + blockWidth, yAxis]
-    this.topRight = [xAxis + blockWidth, yAxis + blockHeight]
-    this.topLeft = [xAxis, yAxis + blockHeight]
-  }
-}
+        // Brick config
+        let brickWidth = 100;
+        let brickHeight = 22;
+        let brickMargin = 10;
 
-//all my blocks
-const blocks = [
-  new Block(10, 270),
-  new Block(120, 270),
-  new Block(230, 270),
-  new Block(340, 270),
-  new Block(450, 270),
-  new Block(10, 240),
-  new Block(120, 240),
-  new Block(230, 240),
-  new Block(340, 240),
-  new Block(450, 240),
-  new Block(10, 210),
-  new Block(120, 210),
-  new Block(230, 210),
-  new Block(340, 210),
-  new Block(450, 210),
-]
+        let numberBrickPerLine = 6;
+        let numberBrickPerColumn = 6;
 
-//draw my blocks
-function addBlocks() {
-  for (let i = 0; i < blocks.length; i++) {
-    const block = document.createElement('div')
-    block.classList.add('block')
-    block.style.left = blocks[i].bottomLeft[0] + 'px'  
-    block.style.bottom = blocks[i].bottomLeft[1] + 'px'  
-    grid.appendChild(block)
-    console.log(blocks[i].bottomLeft)
-  }
-}
-addBlocks()
+        let brickOffsetLeft = 140;
+        let brickOffsetTop = 100;
+        let isPaused = false;
 
-//add user
-const user = document.createElement('div')
-user.classList.add('user')
-grid.appendChild(user)
-drawUser()
+        /**
+         * Keyboard event
+         */
+        function initKeyboardListener() {
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+        }
+        initKeyboardListener();
+        /**
+         * On key down keyboard
+         */
+        function onKeyDown(event) {
+            if (event.key === 'ArrowRight') {
+                moveRight = true;
+            }
+            else if (event.key === 'ArrowLeft') {
+                moveLeft = true;
+            }
+        }
 
-//add ball
-const ball = document.createElement('div')
-ball.classList.add('ball')
-grid.appendChild(ball)
-drawBall()
+        document.addEventListener('keydown', event => {
+            const backgroundImg = new Image();
+backgroundImg.src = 'index.png';
 
-//move user
-function moveUser(e) {
-  switch (e.key) {
-    case 'ArrowLeft':
-      if (currentPosition[0] > 0) {
-        currentPosition[0] -= 10
-        console.log(currentPosition[0] > 0)
-        drawUser()   
-      }
-      break
-    case 'ArrowRight':
-      if (currentPosition[0] < (boardWidth - blockWidth)) {
-        currentPosition[0] += 10
-        console.log(currentPosition[0])
-        drawUser()   
-      }
-      break
-  }
-}
-document.addEventListener('keydown', moveUser)
+             if (event.key === 'p') {
+                if (!isPaused) {
+                  cancelAnimationFrame(animationFrame);
+                  isPaused = true;
+                  console.log('Game paused');
+                  container.style.backgroundImage = `url(${backgroundImg.src})`;
+                container.style.backgroundSize = 'cover';
+                container.style.backgroundRepeat = 'no-repeat';
 
-//draw User
-function drawUser() {
-  user.style.left = currentPosition[0] + 'px'
-  user.style.bottom = currentPosition[1] + 'px'
-}
+                } else {
+                  animationFrame = requestAnimationFrame(gameLoop);
+                  isPaused = false;
+                  console.log('Game resumed');
+                  container.style.backgroundImage = "none";
+              }
+            }
+          });
 
-//draw Ball
-function drawBall() {
-  ball.style.left = ballCurrentPosition[0] + 'px'
-  ball.style.bottom = ballCurrentPosition[1] + 'px'
-}
+          function gameLoop() {
+            if (!isPaused) {
+              movePaddle();
+              moveBall();
+              checkCollisionPaddle();
+              checkCollisionBricks();
+              animationFrame = requestAnimationFrame(gameLoop);
+            }
+          }          
 
-//move ball
-function moveBall() {
-    ballCurrentPosition[0] += xDirection
-    ballCurrentPosition[1] += yDirection
-    drawBall()
-    checkForCollisions()
-}
-timerId = setInterval(moveBall, 30)
+        /**
+         * On key up keyboard
+         */
+        function onKeyUp(event) {
+            if (event.key === 'ArrowRight') {
+                moveRight = false;
+            }
+            else if (event.key === 'ArrowLeft') {
+                moveLeft = false;
+            }
+        }
 
-//check for collisions
-function checkForCollisions() {
-  //check for block collision
-  for (let i = 0; i < blocks.length; i++){
-    if
-    (
-      (ballCurrentPosition[0] > blocks[i].bottomLeft[0] && ballCurrentPosition[0] < blocks[i].bottomRight[0]) &&
-      ((ballCurrentPosition[1] + ballDiameter) > blocks[i].bottomLeft[1] && ballCurrentPosition[1] < blocks[i].topLeft[1]) 
-    )
-      {
-      const allBlocks = Array.from(document.querySelectorAll('.block'))
-      allBlocks[i].classList.remove('block')
-      blocks.splice(i,1)
-      changeDirection()   
-      score++
-      scoreDisplay.innerHTML = score
-      if (blocks.length == 0) {
-        scoreDisplay.innerHTML = 'You Win!'
-        clearInterval(timerId)
-        document.removeEventListener('keydown', moveUser)
-      }
-    }
-  }
-  // check for wall hits
-  if (ballCurrentPosition[0] >= (boardWidth - ballDiameter) || ballCurrentPosition[0] <= 0 || ballCurrentPosition[1] >= (boardHeight - ballDiameter))
-  {
-    changeDirection()
-  }
-
-  //check for user collision
-  if
-  (
-    (ballCurrentPosition[0] > currentPosition[0] && ballCurrentPosition[0] < currentPosition[0] + blockWidth) &&
-    (ballCurrentPosition[1] > currentPosition[1] && ballCurrentPosition[1] < currentPosition[1] + blockHeight ) 
-  )
-  {
-    changeDirection()
-  }
-
-  //game over
-  if (ballCurrentPosition[1] <= 0) {
-    clearInterval(timerId)
-    scoreDisplay.innerHTML = 'You lose!'
-    document.removeEventListener('keydown', moveUser)
-  }
-}
+        /**
+         * Move Paddle
+         */
+        function movePaddle() {
 
 
-function changeDirection() {
-  if (xDirection === 2 && yDirection === 2) {
-    yDirection = -2
-    return
-  }
-  if (xDirection === 2 && yDirection === -2) {
-    xDirection = -2
-    return
-  }
-  if (xDirection === -2 && yDirection === -2) {
-    yDirection = 2
-    return
-  }
-  if (xDirection === -2 && yDirection === 2) {
-    xDirection = 2
-    return
-  }
-}
+            let currentPositionLeft = paddle.offsetLeft;
+
+            if (moveRight) {
+                currentPositionLeft += step;
+            }
+            else if(moveLeft) {
+                currentPositionLeft -= step;
+            }
+
+            // Limit Left
+            if(currentPositionLeft < 0) {
+                currentPositionLeft = 0;
+            }
+
+            // Limit Right
+            if(currentPositionLeft + paddle.offsetWidth > container.offsetWidth) {
+                currentPositionLeft = container.offsetWidth - paddle.offsetWidth;
+            }
+
+            paddle.style.left = currentPositionLeft + 'px';
+        }
+
+        /**
+         * Ball move
+         */
+        function moveBall() {
+            let currentPositionLeft = ball.offsetLeft;
+            let currentPositionTop = ball.offsetTop;
+
+            // Limit left
+            if (currentPositionLeft < 0) {
+                ballDx = -ballDx;
+            }
+
+            // Limit Right
+            if (currentPositionLeft + ballRadius * 2 > container.offsetWidth) {
+                ballDx = -ballDx;
+            }
+
+            // Limit Top
+            if (currentPositionTop < 0) {
+                ballDy = -ballDy;
+            }
+
+            // Limit Bottom
+            if (currentPositionTop + ballRadius * 2 > container.offsetHeight) {
+                // ballDy = -ballDy;
+                alert('GameOver');
+                cancelAnimationFrame(animationFrame);
+                location.reload();
+
+            }
+
+            currentPositionLeft += ballDx;
+            currentPositionTop += ballDy;
+
+
+            ball.style.left = currentPositionLeft + 'px';
+            ball.style.top = currentPositionTop + 'px';
+        }
+
+        /**
+         * Check collision between paddle and ball
+         */
+        function checkCollisionPaddle() {
+            let ballX = ball.offsetLeft + ballRadius;
+            let ballBottomY = ball.offsetTop + ballRadius * 2;
+
+            let paddleLeft = paddle.offsetLeft;
+            let paddleTop = paddle.offsetTop;
+            let paddleRight = paddleLeft + paddle.offsetWidth;
+            let paddleBottom = paddleTop + paddle.offsetHeight;
+
+            // Collision
+            if (ballX > paddleLeft && ballX < paddleRight &&
+                ballBottomY > paddleTop && ballBottomY < paddleBottom
+            ) {
+                ballDy = -ballDy;
+
+                if (ballX < paddleLeft + paddle.offsetWidth / 2) {
+                    ballDx = -Math.abs(ballDx);
+                }
+
+                if (ballX > paddleLeft + paddle.offsetWidth / 2) {
+                    ballDx = Math.abs(ballDx);
+                }
+
+            }
+        }
+
+        /**
+         * Check collision between bricks and ball
+         */
+        function checkCollisionBricks() {
+            let ballX = ball.offsetLeft + ballRadius;
+            let ballY = ball.offsetTop + ballRadius;
+
+            
+            for(let i = bricks.length - 1; i >= 0; i--) {
+                let b = bricks[i];
+
+                let brickLeft = b.offsetLeft;
+                let brickTop = b.offsetTop;
+                let brickRight = brickLeft + b.offsetWidth;
+                let brickBottom = brickTop + b.offsetHeight;
+
+                // Collision
+                if (ballX > brickLeft &&
+                    ballX < brickRight &&
+                    ballY + ballRadius > brickTop &&
+                    ballY - ballRadius < brickBottom
+                ) {
+                    ballDy = -ballDy;
+
+                    container.removeChild(b);
+
+                    bricks.splice(i, 1);
+                }
+            }
+        }
+
+        /**
+         * Create all bricks
+         */
+        function createBrick() {
+            let positionX = brickOffsetLeft;
+            let positionY = brickOffsetTop;
+
+            for (let i = 0; i < numberBrickPerColumn; i++) {
+                for(let j = 0; j < numberBrickPerLine; j++) {
+                    let brick = document.createElement('div');
+                    brick.className = 'brick';
+
+                    brick.style.width = brickWidth + 'px';
+                    brick.style.height = brickHeight + 'px';
+                    brick.style.left = positionX + 'px';
+                    brick.style.top = positionY + 'px';
+
+                    container.appendChild(brick);
+
+                    positionX += brickWidth + brickMargin;
+
+                    bricks.push(brick);
+                }
+
+                positionX = brickOffsetLeft;
+                positionY += brickHeight + brickMargin;
+            }
+        }
+
+        /**
+         * 60 FPS rendering
+         */
+        function loop(){
+            animationFrame = window.requestAnimationFrame(function() {
+                movePaddle();
+                moveBall();
+                checkCollisionPaddle();
+                checkCollisionBricks();
+
+                loop();
+            })
+        }
+
+        /**
+         * Init game
+         */
+        function init() {
+            //Init
+            initKeyboardListener();
+            createBrick();
+
+            loop();
+        }
+
+        init();

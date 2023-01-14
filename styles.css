@@ -1,29 +1,40 @@
-.grid {
-  position: absolute;
-  width: 560px;
-  height: 300px;
-  border: solid 1px black;
-  margin-top: 100px;
+html, body{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.user {
+#container{
+  position: relative;
+  width: 800px;
+  height: 800px;
+  box-sizing: border-box;
+  background-color: aliceblue;
+  margin: 0 auto; /* centrage horizontal */
+}
+
+#paddle {
   position: absolute;
+  bottom: 50px;
+  left: 200px;
   width: 100px;
   height: 20px;
-  background-color: blueviolet;
+  background-color: brown;
 }
 
-.block {
+#ball {
   position: absolute;
-  width: 100px;
-  height: 20px;
-  background-color: blue;
-}
-
-.ball {
-  position: absolute;
+  left: 300px;
+  bottom: 200px;
   width: 20px;
   height: 20px;
-  border-radius: 10px;
-  background-color: red;
+  border-radius: 50%;
+  background-color: darkgreen;
 }
+
+.brick {
+  position: absolute;
+  background-color: midnightblue;
+}
+
